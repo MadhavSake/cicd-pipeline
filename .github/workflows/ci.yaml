@@ -1,4 +1,4 @@
-name: CI - Build and Push Docker Image
+name: CI - Build, Push & Update Helm Tag
 
 on:
   push:
@@ -9,17 +9,19 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION_DEV }}
   IMAGE_NAME: auth-service
+  REPOSITORY: my-repo
+  HELM_VALUES_PATH: helm-charts/values.yaml
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
@@ -27,14 +29,29 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY_DEV }}
 
-      - name: Configure Docker
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker $REGION-docker.pkg.dev
 
       - name: Build Docker Image
         run: |
-          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/my-repo/$IMAGE_NAME:${{ github.sha }} .
+          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ github.sha }} .
 
       - name: Push Docker Image
         run: |
-          docker push $REGION-docker.pkg.dev/$PROJECT_ID/my-repo/$IMAGE_NAME:${{ github.sha }}
+          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Update Helm values.yaml with new image tag
+        run: |
+          sed -i "s|tag:.*|tag: \"${{ github.sha }}\"|g" $HELM_VALUES_PATH
+
+      - name: Commit and Push updated Helm values
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add $HELM_VALUES_PATH
+          git commit -m "Update image tag to ${{ github.sha }}" || echo "No changes to commit"
+          git push
