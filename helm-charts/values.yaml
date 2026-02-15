@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: us-central1-docker.pkg.dev/automation-480006/my-repo/auth-service
-  tag: "893fa7d9a0451759512170a67717368e16168c7c"
+  tag: "d79c111da33d77041078eb21b21d678522db8aba"
   pullPolicy: IfNotPresent
 
 service:
