@@ -1,8 +1,8 @@
 replicaCount: 2
 
 image:
-  repository: gcr.io/YOUR_PROJECT_ID/auth-service
-  tag: "latest"
+  repository: us-central1-docker.pkg.dev/automation-480006/my-repo/auth-service
+  tag: "initial"
   pullPolicy: IfNotPresent
 
 service:
