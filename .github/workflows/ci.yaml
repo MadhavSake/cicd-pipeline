@@ -1,57 +1,61 @@
-name: CI - Build, Push & Update Helm Tag
+name: CI - Build, Push & Deploy to Cloud Run
 
 on:
   push:
     branches:
-      - main
+      - cloud-run
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION_DEV }}
   IMAGE_NAME: auth-service
   REPOSITORY: my-repo
-  HELM_VALUES_PATH: helm-charts/values.yaml
+  SERVICE_NAME: auth-service
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
       id-token: write
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY_DEV }}
 
+      # 3️⃣ Setup gcloud
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
+      # 4️⃣ Configure Docker for Artifact Registry
+      - name: Configure Docker
         run: |
-          gcloud auth configure-docker $REGION-docker.pkg.dev
+          gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
+      # 5️⃣ Build Docker image
       - name: Build Docker Image
         run: |
           docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ github.sha }} .
 
+      # 6️⃣ Push Docker image
       - name: Push Docker Image
         run: |
           docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ github.sha }}
 
-      - name: Update Helm values.yaml with new image tag
+      # 7️⃣ Deploy to Cloud Run
+      - name: Deploy to Cloud Run
         run: |
-          sed -i "s|tag:.*|tag: \"${{ github.sha }}\"|g" $HELM_VALUES_PATH
-
-      - name: Commit and Push updated Helm values
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add $HELM_VALUES_PATH
-          git commit -m "Update image tag to ${{ github.sha }}" || echo "No changes to commit"
-          git push
+          gcloud run deploy $SERVICE_NAME \
+            --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ github.sha }} \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
