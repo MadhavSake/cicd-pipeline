@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: asia-south1-docker.pkg.dev/automation-480006/my-repo/auth-service
-  tag: "0e043b26d6753504c69a8be2661e3a54192852c4"
+  tag: "c34fae3b94071733380c7cff8ad02b32028909fb"
   pullPolicy: IfNotPresent
 
 service:
