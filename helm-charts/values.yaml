@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: asia-south1-docker.pkg.dev/automation-480006/my-repo/auth-service
+  repository: asia-south1-docker.pkg.dev/automation-480006/gke-docker-repo/auth-service
   tag: "726cadf76eede02c79929b19f5dded4b72d147b9"
   pullPolicy: IfNotPresent
 
