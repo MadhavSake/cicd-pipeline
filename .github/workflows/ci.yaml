@@ -9,7 +9,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION_DEV }}
   IMAGE_NAME: auth-service
-  REPOSITORY:  gke-docker-repo
+  REPOSITORY: my-repo
   HELM_VALUES_PATH: helm-charts/values.yaml
 
 jobs:
