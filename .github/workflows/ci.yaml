@@ -3,7 +3,7 @@ name: CI - Build, Push & Update Helm Tag
 on:
   push:
     branches:
-      - main
+      - helm-gke-basic
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
